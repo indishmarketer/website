@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SGF Fab Industries - Complete Traffic Analysis Dashboard</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .dashboard {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: #2d3748;
+            margin-bottom: 10px;
+            text-align: center;
+        }
+
+        .header .subtitle {
+            text-align: center;
+            color: #718096;
+            font-size: 1.1rem;
+            margin-bottom: 20px;
+        }
+
+        .executive-summary {
+            background: linear-gradient(135deg, #ff6b6b, #ee5a24);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 25px rgba(255, 107, 107, 0.3);
+        }
+
+        .section {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .section h2 {
+            color: #2d3748;
+            font-size: 1.8rem;
+            margin-bottom: 25px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .section h3 {
+            color: #4a5568;
+            font-size: 1.3rem;
+            margin-bottom: 15px;
+            margin-top: 25px;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .metric-card {
+            background: linear-gradient(135deg, #f7fafc 0%, #edf2f7 100%);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .metric-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .metric-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        .metric-label {
+            color: #718096;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .geo-distribution {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .geo-item {
+            background: #f7fafc;
+            padding: 15px;
+            border-radius: 10px;
+            border-left: 4px solid #667eea;
+        }
+
+        .geo-country {
+            font-weight: 600;
+            color: #2d3748;
+        }
+
+        .geo-percentage {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #667eea;
+        }
+
+        .traffic-sources {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .source-item {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 10px 25px rgba(79, 172, 254, 0.3);
+        }
+
+        .source-percentage {
+            font-size: 2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+
+        .source-label {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+
+        .engagement-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .engagement-item {
+            background: #f7fafc;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            border: 2px solid #e2e8f0;
+        }
+
+        .engagement-value {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #667eea;
+            margin-bottom: 8px;
+        }
+
+        .table-container {
+            overflow-x: auto;
+            margin: 20px 0;
+        }
+
+        .performance-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .performance-table th,
+        .performance-table td {
+            padding: 15px;
+            text-align: left;
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        .performance-table th {
+            background: #667eea;
+            color: white;
+            font-weight: 600;
+        }
+
+        .performance-table tr:hover {
+            background: #f7fafc;
+        }
+
+        .performance-table tr:nth-child(even) {
+            background: #f8f9fa;
+        }
+
+        .advertising-analysis {
+            background: linear-gradient(135deg, #ffeaa7 0%, #fab1a0 100%);
+            color: #2d3748;
+            padding: 25px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+
+        .advertising-analysis h4 {
+            color: #2d3748;
+            margin-bottom: 15px;
+        }
+
+        .ad-item {
+            background: rgba(255, 255, 255, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .trend-analysis {
+            background: linear-gradient(135deg, #fd79a8 0%, #fdcb6e 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+
+        .trend-item {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 10px;
+        }
+
+        .backlink-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .backlink-item {
+            background: #e3f2fd;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            border: 2px solid #2196f3;
+        }
+
+        .backlink-number {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #1976d2;
+            margin-bottom: 5px;
+        }
+
+        .competitor-comparison {
+            background: linear-gradient(135deg, #a8e6cf 0%, #88d8c0 100%);
+            padding: 25px;
+            border-radius: 15px;
+            margin: 20px 0;
+        }
+
+        .competitor-bars {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .competitor-bar {
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 25px;
+            padding: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .bar-fill {
+            position: absolute;
+            top: 0;
+            left: 0;
+            height: 100%;
+            background: linear-gradient(90deg, #ff6b6b, #feca57);
+            border-radius: 25px;
+            transition: width 1.5s ease;
+        }
+
+        .bar-content {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: 600;
+        }
+
+        .recommendations {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 20px;
+            margin: 20px 0;
+        }
+
+        .recommendations h3 {
+            color: white;
+            margin-bottom: 20px;
+        }
+
+        .rec-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+
+        .rec-item {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 20px;
+            border-radius: 15px;
+            backdrop-filter: blur(5px);
+        }
+
+        .rec-title {
+            font-weight: 700;
+            margin-bottom: 10px;
+            color: #ffd700;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            margin: 20px 0;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .chart-title {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #2d3748;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .two-column {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 25px;
+            margin: 20px 0;
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-top: 10px;
+        }
+
+        .status-declining {
+            background: #fed7d7;
+            color: #c53030;
+        }
+
+        .status-minimal {
+            background: #fef5e7;
+            color: #dd6b20;
+        }
+
+        .status-stable {
+            background: #e6fffa;
+            color: #319795;
+        }
+
+        .icon {
+            font-size: 1.5rem;
+        }
+
+        @media (max-width: 768px) {
+            .two-column {
+                grid-template-columns: 1fr;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .metrics-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard">
+        <div class="header">
+            <h1>SGF Fab Industries - Complete Traffic Analysis</h1>
+            <div class="subtitle">Domain: sgffab.com | Analysis Period: January 2025 - June 2025</div>
+            <div class="executive-summary">
+                <h3>🎯 Executive Summary</h3>
+                <p><strong>sgffab.com</strong> is a small-scale industrial manufacturing site with <strong>limited but focused traffic</strong>, predominantly from <strong>India</strong>. It receives an estimated <strong>200–300 visits/month</strong>, mostly from <strong>organic search</strong>, with <strong>minimal advertising activity</strong>. Engagement levels are modest, and current data shows a <strong>decline in traffic</strong> over recent months.</p>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2><span class="icon">🔢</span> Key Traffic Metrics</h2>
+            
+            <h3>Monthly, Weekly, Daily Visit Estimates</h3>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">312</div>
+                    <div class="metric-label">Monthly Visits (SimilarWeb)</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">200</div>
+                    <div class="metric-label">Monthly Visits (SEMrush)</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">1</div>
+                    <div class="metric-label">Monthly Visits (Ahrefs)</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">70-75</div>
+                    <div class="metric-label">Weekly Visits</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">10-11</div>
+                    <div class="metric-label">Daily Visits</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">1,874</div>
+                    <div class="metric-label">Total Visits (6 months)</div>
+                    <div class="status-badge status-declining">-82.35% Decline</div>
+                </div>
+            </div>
+
+            <h3>Visitor Geolocation (Top Countries)</h3>
+            <div class="geo-distribution">
+                <div class="geo-item">
+                    <div class="geo-country">🇮🇳 India</div>
+                    <div class="geo-percentage">100%</div>
+                </div>
+                <div class="geo-item">
+                    <div class="geo-country">🇺🇸 United States</div>
+                    <div class="geo-percentage">~0%</div>
+                </div>
+                <div class="geo-item">
+                    <div class="geo-country">🇮🇹 Italy</div>
+                    <div class="geo-percentage">~0%</div>
+                </div>
+                <div class="geo-item">
+                    <div class="geo-country">🇷🇺 Russia</div>
+                    <div class="geo-percentage">~0%</div>
+                </div>
+            </div>
+
+            <h3>Traffic Sources</h3>
+            <div class="traffic-sources">
+                <div class="source-item">
+                    <div class="source-percentage">52%</div>
+                    <div class="source-label">Organic Search</div>
+                </div>
+                <div class="source-item">
+                    <div class="source-percentage">~35%</div>
+                    <div class="source-label">Direct/Other</div>
+                </div>
+                <div class="source-item">
+                    <div class="source-percentage">7.85%</div>
+                    <div class="source-label">Referrals</div>
+                </div>
+                <div class="source-item">
+                    <div class="source-percentage">3.25%</div>
+                    <div class="source-label">Social Media</div>
+                </div>
+                <div class="source-item">
+                    <div class="source-percentage">1.87%</div>
+                    <div class="source-label">Display Ads</div>
+                </div>
+            </div>
+
+            <h3>Engagement Stats</h3>
+            <div class="engagement-grid">
+                <div class="engagement-item">
+                    <div class="engagement-value">42.2%</div>
+                    <div class="metric-label">Bounce Rate</div>
+                </div>
+                <div class="engagement-item">
+                    <div class="engagement-value">1:06</div>
+                    <div class="metric-label">Avg. Visit Duration</div>
+                </div>
+                <div class="engagement-item">
+                    <div class="engagement-value">2.38</div>
+                    <div class="metric-label">Pages per Visit</div>
+                </div>
+                <div class="engagement-item">
+                    <div class="engagement-value">147</div>
+                    <div class="metric-label">Monthly Unique Visitors</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2><span class="icon">📈</span> Advertising Activity</h2>
+            
+            <div class="advertising-analysis">
+                <h4>Google Ads / Paid Search Analysis</h4>
+                <div class="ad-item">
+                    <strong>SEMrush:</strong> No paid traffic detected
+                </div>
+                <div class="ad-item">
+                    <strong>Ahrefs:</strong> $0.13 traffic value — negligible
+                </div>
+                <div class="ad-item">
+                    <strong>SimilarWeb:</strong> Paid Search contributes <1%
+                </div>
+                <div class="ad-item">
+                    <strong>Conclusion:</strong> <span class="status-badge status-minimal">No meaningful Google Ads or paid campaign activity</span>
+                </div>
+
+                <h4 style="margin-top: 20px;">Display Ads</h4>
+                <div class="ad-item">
+                    Contributes 1.87% of traffic (possibly retargeting or niche B2B ad placements)
+                </div>
+                <div class="ad-item">
+                    No data on specific ad publishers or creatives
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2><span class="icon">📄</span> Top-Performing Pages</h2>
+            
+            <div class="table-container">
+                <table class="performance-table">
+                    <thead>
+                        <tr>
+                            <th>URL</th>
+                            <th>Page Title</th>
+                            <th>Organic Traffic</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>/mhe.html</td>
+                            <td>Material Handling Equipment</td>
+                            <td>1 (100%)</td>
+                            <td><span class="status-badge status-stable">Active</span></td>
+                        </tr>
+                        <tr>
+                            <td>/transfer-trolley.html</td>
+                            <td>Transfer Trolley</td>
+                            <td>0</td>
+                            <td><span class="status-badge status-declining">No Traffic</span></td>
+                        </tr>
+                        <tr>
+                            <td>/rail-fabrication.html</td>
+                            <td>Rail Fabrication</td>
+                            <td>0</td>
+                            <td><span class="status-badge status-declining">No Traffic</span></td>
+                        </tr>
+                        <tr>
+                            <td>/jib-cranes.html</td>
+                            <td>Jib Cranes</td>
+                            <td>0</td>
+                            <td><span class="status-badge status-declining">No Traffic</span></td>
+                        </tr>
+                        <tr>
+                            <td>/industrial-hoists.html</td>
+                            <td>Industrial Hoists</td>
+                            <td>0</td>
+                            <td><span class="status-badge status-declining">No Traffic</span></td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p style="margin-top: 15px; font-style: italic; color: #718096;">
+                <strong>Note:</strong> Only /mhe.html brings in organic traffic as per Ahrefs. Others are indexed but not ranking.
+            </p>
+        </div>
+
+        <div class="section">
+            <h2><span class="icon">🔍</span> Top Keywords Performance</h2>
+            
+            <h3>Organic Keywords (64 total)</h3>
+            <div class="table-container">
+                <table class="performance-table">
+                    <thead>
+                        <tr>
+                            <th>Keyword</th>
+                            <th>Position</th>
+                            <th>Volume</th>
+                            <th>Source</th>
+                            <th>Opportunity</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>material handling equipment manufacturers in bangalore</td>
+                            <td>6</td>
+                            <td>10</td>
+                            <td>Ahrefs</td>
+                            <td>High</td>
+                        </tr>
+                        <tr>
+                            <td>eot crane manufacturers</td>
+                            <td>27</td>
+                            <td>150</td>
+                            <td>Ahrefs</td>
+                            <td>High</td>
+                        </tr>
+                        <tr>
+                            <td>transfer trolley</td>
+                            <td>16</td>
+                            <td>70</td>
+                            <td>Ahrefs</td>
+                            <td>Medium</td>
+                        </tr>
+                        <tr>
+                            <td>fabrication industries</td>
+                            <td>23</td>
+                            <td>40</td>
+                            <td>Ahrefs</td>
+                            <td>Medium</td>
+                        </tr>
+                        <tr>
+                            <td>gantry rail</td>
+                            <td>17</td>
+                            <td>20</td>
+                            <td>Ahrefs</td>
+                            <td>Low</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <h3>Branded vs Non-Branded Search</h3>
+            <div class="table-container">
+                <table class="performance-table">
+                    <thead>
+                        <tr>
+                            <th>Search Term</th>
+                            <th>Traffic Share</th>
+                            <th>Type</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>lifting provision ideas for metal cage</td>
+                            <td>100%</td>
+                            <td>Non-branded</td>
+                        </tr>
+                        <tr>
+                            <td>eot crane manufacturer</td>
+                            <td>-</td>
+                            <td>Non-branded</td>
+                        </tr>
+                        <tr>
+                            <td>fabrication work in bangalore</td>
+                            <td>-</td>
+                            <td>Non-branded</td>
+                        </tr>
+                        <tr>
+                            <td>sgf industries pvt ltd</td>
+                            <td>-</td>
+                            <td>Branded</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            <p style="margin-top: 15px; font-style: italic; color: #718096;">
+                Focused on <strong>industrial machinery</strong> and <strong>fabrication services</strong> in <strong>India</strong>, mostly non-branded searches.
+            </p>
+        </div>
+
+        <div class="section">
+            <h2><span class="icon">📉</span> Traffic Trend Analysis</h2>
+            
+            <div class="trend-analysis">
+                <h3 style="color: white;">Traffic Trends</h3>
+                <div class="trend-item">
+                    <strong>Overall decline in visits</strong> - SimilarWeb shows -82.35% drop from previous month
+                </div>
+                <div class="trend-item">
+                    <strong>SEMrush historical traffic:</strong> Flat and extremely low since 2012; currently ~200/month
+                </div>
+                <div class="trend-item">
+                    <strong>No growth spikes</strong> or new keyword wins recently
+                </div>
+                <div class="trend-item">
+                    <strong>Conclusion:</strong> Website is in a <strong>declining traffic trend</strong>, likely due to lack of fresh content or SEO efforts
+                </div>
+            </div>
+
+            <div class="two-column">
+                <div class="chart-container">
+                    <div class="chart-title">Traffic Sources Distribution</div>
+                    <canvas id="trafficSourcesChart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <div class="chart-title">Monthly Traffic Decline</div>
+                    <canvas id="trafficTrendChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2><span class="icon">📱</span> Device Usage & Technical Insights</h2>
+            
+            <h3>Device Distribution</h3>
+            <p>Device Distribution data not extensively detailed in SimilarWeb, but low volume suggests <strong>primarily desktop users</strong> (common for industrial B2B sectors)</p>
+
+            <h3>Authority Score & Domain Metrics</h3>
+            <div class="metrics-grid">
+                <div class="metric-card">
+                    <div class="metric-value">8</div>
+                    <div class="metric-label">Authority Score (out of 100)</div>
+                    <div class="status-badge status-declining">Very Low</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">26.9M</div>
+                    <div class="metric-label">Semrush Domain Rank</div>
+                    <div class="status-badge status-declining">Poor Ranking</div>
+                </div>
+                <div class="metric-card">
+                    <div class="metric-value">64</div>
+                    <div class="metric-label">Ranking Keywords</div>
+                    <div class="status-badge status-minimal">Limited Coverage</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="section">
+            <h2><span class="icon">🔗</span> Referring Domains & Backlinks</h2>
+            
+            <div class="backlink-stats">
+                <div class="backlink-item">
+                    <div class="backlink-number">252</div>
+                    <div class="metric-label">Total Backlinks</div>
+                </div>
+                <div class="backlink-item">
+                    <div class="backlink-number">86</div>
+                    <div class="metric-label">Referring Domains</div>
+                </div>
+                <div class="backlink-item">
+                    <div class="backlink-number">7.85%</div>
+                    <div class="metric-label">Referral Traffic</div>
+                </div>
+            </div>
+            <p style="margin-top: 15px; color: #718096;">
+                Referral traffic contributes 7.85%, but no top referrers were identified in the data.
+            </p>
+        </div>
+
+        <div class="section">
+            <h2><span class="icon">🏆</span> Competitive Analysis</h2>
+            
+            <div class="competitor-comparison">
+                <h3>Traffic Comparison with Competitors</h3>
+                <div class="competitor-bars">
+                    <div class="competitor-bar">
+                        <div class="bar-fill" style="width: 100%;"></div>
+                        <div class="bar-content">
+                            <span>viatris.in</span>
+                            <span>42,011 visits</span>
+                        </div>
+                    </div>
+                    <div class="competitor-bar">
+                        <div class="bar-fill" style="width: 31%;"></div>
+                        <div class="bar-content">
+                            <span>k2cranes.com</span>
+                            <span>12,926 visits</span>
+                        </div>
+                    </div>
+                    <div class="competitor-bar">
+                        <div class="bar-fill" style="width: 25%;"></div>
+                        <div class="bar-content">
+                            <span>karnatakaindustriesonline.com</span>
+                            <span>10,607 visits</span>
+                        </div>
+                    </div>
+                    <div class="competitor-bar">
+                        <div class="bar-fill" style="width: 4%;"></div>
+                        <div class="bar-content">
+                            <span>diliplifttruck.com</span>
+                            <span>1,711 visits</span>
+                        </div>
+                    </div>
+                    <div class="competitor-bar">
+                        <div class="bar-fill" style="width: 1%;"></div>
+                        <div class="bar-content">
+                            <span><strong>sgffab.com</strong></span>
+                            <span>312 visits</span>
+                        </div>
+                    </div>
+                </div>
+                <p style="margin-top: 20px; color: #2d3748;">
+                    <strong>sgffab.com</strong> is <strong>highly India-centric
